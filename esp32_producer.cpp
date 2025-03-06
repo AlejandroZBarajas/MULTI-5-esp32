@@ -4,49 +4,74 @@
 const char* ssid = "INFINITUM1C29";       
 const char* password = "maUk4yEP9d"; 
 
-
-const char* serverUrl = "http://192.168.1.244:8080/events";  
+const char* serverUrl = "http://192.168.1.244:8080/events"; 
+const int pirPin = 13; 
+bool movimientoDetectado = false;
 
 void setup() {
     Serial.begin(115200);
-    
-    WiFi.begin(ssid, password);
-    Serial.print("Conectando a WiFi...");
-    
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(1000);
-        Serial.print(".");
-    }
-    
-    Serial.println("\nConectado a WiFi con IP: " + WiFi.localIP().toString());
+    pinMode(pirPin, INPUT);
+
+    conectarWiFi();
 }
 
 void loop() {
-    if (WiFi.status() == WL_CONNECTED) { 
+    if (WiFi.status() != WL_CONNECTED) {
+        conectarWiFi();
+    }
+
+    int estadoPIR = digitalRead(pirPin);
+
+    if (estadoPIR == HIGH && !movimientoDetectado) {
+        Serial.println("Movimiento detectado, enviando POST...");
+        sendPostRequest();
+        movimientoDetectado = true;
+        delay(5000); 
+    } 
+    else if (estadoPIR == LOW) {
+        movimientoDetectado = false;
+    }
+
+    delay(500); // Pequeño retraso para evitar lecturas erráticas
+}
+
+void conectarWiFi() {
+    Serial.print("Conectando a WiFi...");
+    WiFi.begin(ssid, password);
+    int intentos = 0;
+    while (WiFi.status() != WL_CONNECTED && intentos < 20) {
+        delay(500);
+        Serial.print(".");
+        intentos++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nConectado a WiFi");
+    } else {
+        Serial.println("\nNo se pudo conectar a WiFi");
+    }
+}
+
+void sendPostRequest() {
+    if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
-        
-        Serial.println("Enviando POST...");
         http.begin(serverUrl);
         http.addHeader("Content-Type", "application/json");
 
-        String jsonPayload = "{\"Device_name\":\"ESP32\"}";
-
+        String jsonPayload = "{\"Device_name\":\"ESP32-PIR\", \"message\":\"Movimiento detectado\"}";
         int httpResponseCode = http.POST(jsonPayload);
 
         if (httpResponseCode > 0) {
-            Serial.print("Código de respuesta: ");
+            Serial.print("Respuesta HTTP: ");
             Serial.println(httpResponseCode);
-            String response = http.getString();
-            Serial.println("Respuesta del servidor: " + response);
         } else {
             Serial.print("Error en la solicitud: ");
-            Serial.println(httpResponseCode);
+            Serial.println(http.errorToString(httpResponseCode).c_str());
         }
 
-        http.end(); 
+        http.end();
     } else {
-        Serial.println("WiFi no conectado, reintentando...");
+        Serial.println("No conectado a WiFi, intentando reconectar...");
+        conectarWiFi();
     }
-
-    delay(5000); 
 }
