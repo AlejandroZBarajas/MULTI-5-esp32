@@ -1,38 +1,26 @@
+#include <DHT.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 
 const char* ssid = "INFINITUM1C29";       
 const char* password = "maUk4yEP9d"; 
 
-const char* serverUrl = "http://192.168.1.244:8080/events"; 
-const int pirPin = 13; 
-bool movimientoDetectado = false;
+const char* serverUrl = "http://192.168.1.244:8080/events";
+
+#define DHTPIN 23       
+#define DHTTYPE DHT11  
+
+DHT dht(DHTPIN, DHTTYPE);  
 
 void setup() {
-    Serial.begin(115200);
-    pinMode(pirPin, INPUT);
+  Serial.begin(115200);
 
-    conectarWiFi();
-}
-
-void loop() {
-    if (WiFi.status() != WL_CONNECTED) {
-        conectarWiFi();
-    }
-
-    int estadoPIR = digitalRead(pirPin);
-
-    if (estadoPIR == HIGH && !movimientoDetectado) {
-        Serial.println("Movimiento detectado, enviando POST...");
-        sendPostRequest();
-        movimientoDetectado = true;
-        delay(5000); 
-    } 
-    else if (estadoPIR == LOW) {
-        movimientoDetectado = false;
-    }
-
-    delay(500); // Pequeño retraso para evitar lecturas erráticas
+  conectarWiFi();
+  
+  dht.begin();
+  
+  Serial.println("Iniciando sensor...");
+  delay(2000);
 }
 
 void conectarWiFi() {
@@ -52,13 +40,34 @@ void conectarWiFi() {
     }
 }
 
-void sendPostRequest() {
+void get_temperature(){
+  float temperature = dht.readTemperature();
+
+  float humidity = dht.readHumidity();
+
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Error al leer el sensor DHT!");
+    return;
+  }
+
+  Serial.print("Temperatura: ");
+  Serial.print(temperature);
+  Serial.print(" °C ");
+  Serial.print("Humedad: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  sendPostRequest(temperature, humidity);
+  delay(2000);
+}
+
+void sendPostRequest(float temperature, float humidity) {
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
         http.begin(serverUrl);
         http.addHeader("Content-Type", "application/json");
 
-        String jsonPayload = "{\"Device_name\":\"ESP32-PIR\", \"message\":\"Movimiento detectado\"}";
+        String jsonPayload = "{\"title\":\"Temperatura\", \"description\":\"Temperatura: " + String (temperature) + "°C, Humedad: " + String(humidity) + " %\", \"emitter\":\"DHT11\"}";
         int httpResponseCode = http.POST(jsonPayload);
 
         if (httpResponseCode > 0) {
@@ -74,4 +83,10 @@ void sendPostRequest() {
         Serial.println("No conectado a WiFi, intentando reconectar...");
         conectarWiFi();
     }
+}
+
+void loop() {
+  conectarWiFi();
+  get_temperature();
+  
 }
