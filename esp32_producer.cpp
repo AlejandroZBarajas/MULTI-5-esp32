@@ -67,14 +67,25 @@ void get_temperature(){
   Serial.print(humidity);
   Serial.println(" %");
 
-  isTempOk(temperature);
+  String _title = "Temperatura";
+  String _description = "Temperatura: " + String(temperature) + " °C, Humedad: " + String(humidity) + "%";
+  String _emitter = "DHT11";
 
-  sendPostRequest(temperature, humidity);
+  if(isTempOk(temperature)){
+
+    sendPostRequest(_title, _description, _emitter);
+
+  }
+
   
   delay(2000);
 }
 
-bool isTempOk(bool temp){
+bool isTempOk(float temp){
+
+  String title = "ALERTA TEMPERATURA";
+  String description = "";
+  String emitter = "DHT11"
   
   if(temp >= 20 && temp <= 24){
     
@@ -82,17 +93,25 @@ bool isTempOk(bool temp){
     return true;
     
   }
+
   digitalWrite(tempLed, HIGH);
+
+  if(temp <=19 ){
+    description = "Temperatura debajo de 20°C";
+  } else{
+    description = "Temperatura superior a 24°C";
+  }
+  sendPostRequest(title, description, emitter);
   return false;
 }
 
-void sendPostRequest(float temperature, float humidity) {
+void sendPostRequest(String _title, String _description, String _emitter) {
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
         http.begin(serverUrl);
         http.addHeader("Content-Type", "application/json");
 
-        String jsonPayload = "{\"title\":\"Temperatura\", \"description\":\"Temperatura: " + String (temperature) + "°C, Humedad: " + String(humidity) + " %\", \"emitter\":\"DHT11\"}";
+        String jsonPayload = "{\"title\":\"" + _title + "\", \"description\":\"" + _description + "\", \"emitter\":\"" + _emitter + "\"}";
         int httpResponseCode = http.POST(jsonPayload);
 
         if (httpResponseCode > 0) {
@@ -114,7 +133,10 @@ void sendPostRequest(float temperature, float humidity) {
 }
 
 void loop() {
-  conectarWiFi();
+
+   if (WiFi.status() != WL_CONNECTED) {
+        conectarWiFi();  
+    }
   get_temperature();
   
 }
