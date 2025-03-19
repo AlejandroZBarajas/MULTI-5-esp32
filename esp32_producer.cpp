@@ -2,26 +2,46 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
+//const char* ssid = "arquitest";       
+//const char* password = "arquitest"; 
+
+
 const char* ssid = "INFINITUM1C29";       
 const char* password = "maUk4yEP9d"; 
 
-const char* serverUrl = "http://192.168.1.244:8080/events";
+const char* serverUrl = "http://192.168.1.248:8080/events";
 
 #define DHTPIN 23       
-#define DHTTYPE DHT11  
+#define DHTTYPE DHT11 
+
+const int pinX = 35; 
+const int pinY = 32; 
+const int pinZ = 33;
+
+#define sensLight 25
 
 #define wifiLed 13
 #define postLed 14
 #define tempLed 26
+#define alertLed 18
 
+const float sensibilidad = 300.0;
 
 DHT dht(DHTPIN, DHTTYPE);  
+
+int offsetX = 1916;  // Valor en reposo para X
+int offsetY = 1855;  // Valor en reposo para Y
+int offsetZ = 2307;
 
 void setup() {
   Serial.begin(115200);
   pinMode(tempLed, OUTPUT);
   pinMode(wifiLed, OUTPUT);
   pinMode(postLed, OUTPUT);
+  pinMode(alertLed, OUTPUT);
+
+  analogReadResolution(12);  
+  analogSetAttenuation(ADC_11db);
 
   conectarWiFi();
   
@@ -77,7 +97,6 @@ void get_temperature(){
 
   }
 
-  
   delay(2000);
 }
 
@@ -85,7 +104,7 @@ bool isTempOk(float temp){
 
   String title = "ALERTA TEMPERATURA";
   String description = "";
-  String emitter = "DHT11"
+  String emitter = "DHT11";
   
   if(temp >= 20 && temp <= 24){
     
@@ -101,6 +120,7 @@ bool isTempOk(float temp){
   } else{
     description = "Temperatura superior a 24°C";
   }
+  digitalWrite(alertLed, HIGH);
   sendPostRequest(title, description, emitter);
   return false;
 }
@@ -132,12 +152,29 @@ void sendPostRequest(String _title, String _description, String _emitter) {
     }
 }
 
+void read_accelerometer() {
+    int rawX = analogRead(pinX);
+    int rawY = analogRead(pinY);
+    int rawZ = analogRead(pinZ);
+
+    // Convertir a valores de aceleración en g
+    float accelX = (rawX - offsetX) / sensibilidad;
+    float accelY = (rawY - offsetY) / sensibilidad;
+    float accelZ = (rawZ - offsetZ) / sensibilidad;
+
+    Serial.print("X: "); Serial.print(accelX, 3); Serial.print(" g | ");
+    Serial.print("Y: "); Serial.print(accelY, 3); Serial.print(" g | ");
+    Serial.print("Z: "); Serial.print(accelZ, 3); Serial.println(" g");
+}
+
 void loop() {
 
+  read_accelerometer();
    if (WiFi.status() != WL_CONNECTED) {
         conectarWiFi();  
     }
   get_temperature();
+  delay(1500);
   
 }
 
