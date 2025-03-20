@@ -11,6 +11,8 @@ const char* password = "maUk4yEP9d";
 
 const char* serverUrl = "http://192.168.1.248:8080/events";
 
+bool shouldBeRunning = false;
+
 #define DHTPIN 23       
 #define DHTTYPE DHT11 
 
@@ -29,8 +31,8 @@ const float sensibilidad = 300.0;
 
 DHT dht(DHTPIN, DHTTYPE);  
 
-int offsetX = 1916;  // Valor en reposo para X
-int offsetY = 1855;  // Valor en reposo para Y
+int offsetX = 1916;  
+int offsetY = 1855;  
 int offsetZ = 2307;
 
 void setup() {
@@ -168,11 +170,10 @@ void read_accelerometer() {
 }
 
 void loop() {
-
+  if (WiFi.status() != WL_CONNECTED) {
+    conectarWiFi();  
+  }
   read_accelerometer();
-   if (WiFi.status() != WL_CONNECTED) {
-        conectarWiFi();  
-    }
   get_temperature();
   delay(1500);
   
