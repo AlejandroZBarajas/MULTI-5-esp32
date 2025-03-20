@@ -9,7 +9,7 @@ const char* mqtt_server = "34.232.41.236";
 const int mqtt_port = 1883;
 const char* mqtt_user = "falejandro";
 const char* mqtt_password = "falejandrozroot";
-const char* queue_name = "alert_queue";  
+const char* queue_topic = "alert.#";  
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -48,8 +48,8 @@ void reconnect() {
         if (client.connect("ESP32_Client", mqtt_user, mqtt_password)) {
             Serial.println("Conectado!");
             
-            client.subscribe(queue_name); 
-            Serial.println("Suscrito a "+ String(queue_name) + "!"); 
+            client.subscribe(queue_topic); 
+            Serial.println("Suscrito a "+ String(queue_topic) + "!"); 
         } else {
             Serial.print("Fallo, rc=");
             Serial.print(client.state());
