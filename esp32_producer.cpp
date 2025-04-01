@@ -82,13 +82,18 @@ void conectarWiFi() {
     }
 }
 
-void sendPostRequest(String _title, String _description, String _emitter, String _topic) {
+void sendPostRequest(String _title, int _description, String _emitter, String _topic) {
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
         http.begin(serverUrl);
         http.addHeader("Content-Type", "application/json");
 
-        String jsonPayload = "{\"serie\":\"" + serie + "\", \"title\":\"" + _title + "\", \"description\":\"" + _description + "\", \"emitter\":\"" + _emitter + "\",\"topic\":\"" + _topic + "\"}";
+        String jsonPayload = "{\"serie\":\"" + serie + 
+                              "\", \"title\":\"" + _title + 
+                              "\", \"description\":" + String(_description) + 
+                              ", \"emitter\":\"" + _emitter + 
+                              "\",\"topic\":\"" + _topic + "\"}";
+
         int httpResponseCode = http.POST(jsonPayload);
 
         if (httpResponseCode > 0) {
@@ -118,7 +123,7 @@ void isTempOk(){
   }
 
   String _title = "";
-  String _description = "";
+  int _description = "";
   String _emitter = "DHT11";
   String _topic ="";
 
@@ -136,15 +141,11 @@ void isTempOk(){
     _title = "Temperatura Alta";
     _topic="alert";   
   }
-    _description = String(temp);      
+    _description = temp;      
     sendPostRequest(_title, _description, _emitter, _topic);
 
   delay(2000);
 }
-
-
-
-
 
 int leerPromedio(int pin) {
     int suma = 0;
@@ -156,36 +157,38 @@ int leerPromedio(int pin) {
 }
 
 void isMoving() {
-    int rawX1 = leerPromedio(pinX);
-    int rawY1 = leerPromedio(pinY);
-    int rawZ1 = leerPromedio(pinZ);
+  String _title = "Gyro";
+  int _description = "";
+  String _emitter = "GY-61";
+  String _topic ="";
 
-    delay(500);  
+  int rawX1 = leerPromedio(pinX);
+  int rawY1 = leerPromedio(pinY);
+  int rawZ1 = leerPromedio(pinZ);
 
-    int rawX2 = leerPromedio(pinX);
-    int rawY2 = leerPromedio(pinY);
-    int rawZ2 = leerPromedio(pinZ);
+  delay(500);  
 
-    int Xdif = abs(rawX1 - rawX2);
-    int Ydif = abs(rawY1 - rawY2);
-    int Zdif = abs(rawZ1 - rawZ2);
+  int rawX2 = leerPromedio(pinX);
+  int rawY2 = leerPromedio(pinY);
+  int rawZ2 = leerPromedio(pinZ);
 
-    Serial.print("Xdif: "); Serial.print(Xdif);
-    Serial.print(" | Ydif: "); Serial.print(Ydif);
-    Serial.print(" | Zdif: "); Serial.println(Zdif);
+  int Xdif = abs(rawX1 - rawX2);
+  int Ydif = abs(rawY1 - rawY2);
+  int Zdif = abs(rawZ1 - rawZ2);
 
-    if (Xdif > umbral || Ydif > umbral || Zdif > umbral) {
-        Serial.println("¡Movimiento detectado!");
-    } else {
-        Serial.println("Sin movimiento.");
-    }
+  Serial.print("Xdif: "); Serial.print(Xdif);
+  Serial.print(" | Ydif: "); Serial.print(Ydif);
+  Serial.print(" | Zdif: "); Serial.println(Zdif);
+
+  if (Xdif > umbral || Ydif > umbral || Zdif > umbral) {
+      Serial.println("¡Movimiento detectado!");
+      
+
+  } else {
+      Serial.println("Sin movimiento.");
+  }
+  sendPostRequest(_title, _description, _emitter, _topic);
 }
-
-
-
-
-
-
 
 bool isDark() {
     float lux = lightMeter.readLightLevel();
@@ -194,7 +197,7 @@ bool isDark() {
 
 void isCrying() {
   String _title = "Sonido";
-  String _description = "";
+  int _description = "";
   String _emitter = "FC-04";
   String _topic ="";
   
@@ -209,7 +212,7 @@ void isCrying() {
     if (diferencia > 30) {  
         Serial.println("..............................................¡Ruido detectado!");
         _topic="alert";
-        _description = String(volumenActual);
+        _description = volumenActual;
     }
     volumenBase = volumenActual;
     sendPostRequest(_title, _description, _emitter, _topic);
@@ -218,7 +221,7 @@ void isCrying() {
 void loop() {
   isTempOk();
 
-  for(int i = 0, i<30, i++){
+  for(int i = 0; i<30; i++){
     
       if(isDark()){  
         Serial.println("corriendo servicio");
