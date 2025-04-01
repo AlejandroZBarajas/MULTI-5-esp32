@@ -28,9 +28,9 @@ BH1750 lightMeter;
 
 
 //sonido
-const int pinAnalog = 34;
-int volumenBase = 0;
-unsigned long tiempoInicio = 0; 
+const int pinSonido = 5, umbralEventos = 5, ventanaTiempo = 2000; 
+unsigned long tiempoInicio = 0;
+int detecciones = 0;
 
 //leds
 #define wifiLed 13
@@ -49,8 +49,7 @@ void setup() {
   pinMode(alertLed, OUTPUT);
   pinMode(soundLed, OUTPUT);
 
-  pinMode(pinAnalog, INPUT);
-  volumenBase = analogRead(pinAnalog);
+  pinMode(pinSonido, INPUT);
   
   Wire.begin(SDA_PIN, SCL_PIN);
   dht.begin();
@@ -172,36 +171,21 @@ bool isDark() {
 }
 
 void isCrying() {
-  String _title = "Sonido";
-  String _description = "";
-  String _emitter = "FC-04";
-  String _topic ="";
-  
-    int volumenActual = analogRead(pinAnalog);  
-    int diferencia = abs(volumenActual - volumenBase);  
-
-    Serial.print("Volumen: ");
-    Serial.print(volumenActual);
-    Serial.print(" | Variación: ");
-    Serial.println(diferencia);
-
-    if (diferencia > 30) {  
-        Serial.println("..............................................¡Ruido detectado!");
-        _topic="alert";
-        _description = String(volumenActual);
-    }
-    volumenBase = volumenActual;
-    sendPostRequest(_title, _description, _emitter, _topic);
+    int volumen = analogRead(pinSonido);  
+    Serial.print("Volumen detectado: ");
+    Serial.println(volumen);
+    delay(100);
 }
 
 void loop() {
-  isCrying();
   
   if(isDark()){  
     Serial.println("corriendo servicio");
       isMoving();
+      isCrying();
       isTempOk();
   }
-  delay(500);
+
+  delay(800);
 
 }
