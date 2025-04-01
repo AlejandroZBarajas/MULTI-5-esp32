@@ -20,6 +20,7 @@ DHT dht(DHTPIN, DHTTYPE);
 
 //PINES gyro
 const int pinX = 33, pinY = 32, pinZ = 35;
+const int umbral = 40;
 
 //PINES luz
 #define SDA_PIN 21
@@ -141,23 +142,37 @@ void isTempOk(){
   delay(2000);
 }
 
+
+
+
+
+int leerPromedio(int pin) {
+    int suma = 0;
+    for (int i = 0; i < 5; i++) {  // Leer 5 veces para suavizar valores
+        suma += analogRead(pin);
+        delay(10);
+    }
+    return suma / 5;  // Devolver el promedio
+}
+
 void isMoving() {
-    
-    int rawX1 = analogRead(pinX);
-    int rawY1 = analogRead(pinY);
-    int rawZ1 = analogRead(pinZ);
-    
-    const float umbral = 0.02;  // Ajusta según la sensibilidad del acelerómetro
+    int rawX1 = leerPromedio(pinX);
+    int rawY1 = leerPromedio(pinY);
+    int rawZ1 = leerPromedio(pinZ);
 
     delay(500);  
 
-    int rawX2 = analogRead(pinX);
-    int rawY2 = analogRead(pinY);
-    int rawZ2 = analogRead(pinZ);
+    int rawX2 = leerPromedio(pinX);
+    int rawY2 = leerPromedio(pinY);
+    int rawZ2 = leerPromedio(pinZ);
 
-    float Xdif = abs(rawX1 - rawX2);
-    float Ydif = abs(rawY1 - rawY2);
-    float Zdif = abs(rawZ1 - rawZ2);
+    int Xdif = abs(rawX1 - rawX2);
+    int Ydif = abs(rawY1 - rawY2);
+    int Zdif = abs(rawZ1 - rawZ2);
+
+    Serial.print("Xdif: "); Serial.print(Xdif);
+    Serial.print(" | Ydif: "); Serial.print(Ydif);
+    Serial.print(" | Zdif: "); Serial.println(Zdif);
 
     if (Xdif > umbral || Ydif > umbral || Zdif > umbral) {
         Serial.println("¡Movimiento detectado!");
@@ -165,6 +180,12 @@ void isMoving() {
         Serial.println("Sin movimiento.");
     }
 }
+
+
+
+
+
+
 
 bool isDark() {
     float lux = lightMeter.readLightLevel();
@@ -195,13 +216,16 @@ void isCrying() {
 }
 
 void loop() {
-  isCrying();
-  
-  if(isDark()){  
-    Serial.println("corriendo servicio");
-      isMoving();
-      isTempOk();
+  isTempOk();
+
+  for(int i = 0, i<30, i++){
+    
+      if(isDark()){  
+        Serial.println("corriendo servicio");
+        isMoving();
+        isCrying();
+      }
+
   }
   delay(500);
-
 }
