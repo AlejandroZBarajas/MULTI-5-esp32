@@ -8,7 +8,7 @@
 const char* ssid = "INFINITUM1C29";       
 const char* password = "maUk4yEP9d"; 
 
-const char* serverUrl = "http://192.168.1.248:8080/events";
+const char* serverUrl = "http://192.164.1.248:8080/events";
 
 const String serie = "id0002";
 
@@ -82,7 +82,7 @@ void conectarWiFi() {
     }
 }
 
-void sendPostRequest(String _title, int _description, String _emitter, String _topic) {
+void sendPostRequest(String _title, float _description, String _emitter, String _topic) {
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
         http.begin(serverUrl);
@@ -123,7 +123,7 @@ void isTempOk(){
   }
 
   String _title = "";
-  int _description = "";
+  float _description = temp;
   String _emitter = "DHT11";
   String _topic ="";
 
@@ -141,7 +141,8 @@ void isTempOk(){
     _title = "Temperatura Alta";
     _topic="alert";   
   }
-    _description = temp;      
+
+
     sendPostRequest(_title, _description, _emitter, _topic);
 
   delay(2000);
@@ -157,8 +158,8 @@ int leerPromedio(int pin) {
 }
 
 void isMoving() {
-  String _title = "Gyro";
-  int _description = "";
+  String _title = "";
+  float _description = 0;
   String _emitter = "GY-61";
   String _topic ="";
 
@@ -182,43 +183,72 @@ void isMoving() {
 
   if (Xdif > umbral || Ydif > umbral || Zdif > umbral) {
       Serial.println("¡Movimiento detectado!");
-      
-
+      _title = "¡Alerta! movimiento detectado";
+      _topic="alert"; 
+      _description = 1;
   } else {
       Serial.println("Sin movimiento.");
+      _title = "En calma";
+      _topic="notification"; 
+      _description = 0;
   }
   sendPostRequest(_title, _description, _emitter, _topic);
 }
 
 bool isDark() {
-    float lux = lightMeter.readLightLevel();
-    return (lux < 2);  
+  float lux = lightMeter.readLightLevel();
+
+  String _title = "Hora de dormir. Sistema corriendo.";
+  float _description = 1;
+  String _emitter = "GY-302";
+  String _topic ="alert";
+
+  if (isnan(lux)) {
+    Serial.println("Error al leer el sensor de luz!");
+    return false;
+  }
+  
+  if(lux < 2){
+    Serial.println("Hora de dormir. Sistema corriendo. enviando post");
+    sendPostRequest(_title, _description, _emitter, _topic);
+
+  }
+  return (lux < 2);  
 }
 
 void isCrying() {
-  String _title = "Sonido";
-  int _description = "";
-  String _emitter = "FC-04";
+  int volumenActual = analogRead(pinAnalog);  
+  int diferencia = abs(volumenActual - volumenBase);  
+
+  String _title = "";
+  float _description = volumenActual;
+  String _emitter = "sonido";
   String _topic ="";
   
-    int volumenActual = analogRead(pinAnalog);  
-    int diferencia = abs(volumenActual - volumenBase);  
 
-    Serial.print("Volumen: ");
+/*     Serial.print("Volumen: ");
     Serial.print(volumenActual);
     Serial.print(" | Variación: ");
-    Serial.println(diferencia);
+    Serial.println(diferencia); */
 
-    if (diferencia > 30) {  
+    if (diferencia > 50) {  
         Serial.println("..............................................¡Ruido detectado!");
+        _title = "Fuerte sonido detectado";
         _topic="alert";
-        _description = volumenActual;
+    } else{
+      _title = "Sonido";
+      _topic="notification";
     }
-    volumenBase = volumenActual;
+
+    volumenBase = (volumenBase + volumenActual)/2;
     sendPostRequest(_title, _description, _emitter, _topic);
 }
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi desconectado, intentando reconectar...");
+    conectarWiFi();
+}
   isTempOk();
 
   for(int i = 0; i<30; i++){
