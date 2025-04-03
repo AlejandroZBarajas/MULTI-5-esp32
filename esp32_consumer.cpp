@@ -14,6 +14,19 @@ const char* queue_topic = "alert.#";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+void sendHttpPost(const char* payload) {
+    HTTPClient http;
+    http.begin("http://13.216.151.168:8000/sensor");  
+    http.addHeader("Content-Type", "application/json");
+
+    int httpResponseCode = http.POST(payload);
+
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    
+    http.end();
+}
+
 void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print("Mensaje recibido en tópico: ");
     Serial.println(topic);
