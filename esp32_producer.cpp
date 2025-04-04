@@ -65,21 +65,37 @@ void setup() {
 }
 
 void conectarWiFi() {
-    Serial.print("Conectando a WiFi...");
-    WiFi.begin(ssid, password);
-    int intentos = 0;
-    while (WiFi.status() != WL_CONNECTED && intentos < 20) {
-        delay(500);
-        Serial.print(".");
-        intentos++;
-    }
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("\nConectado a WiFi");
-        digitalWrite(wifiLed, HIGH);
-    } else {
-        Serial.println("\nNo se pudo conectar a WiFi");
-        digitalWrite(wifiLed, LOW);
-    }
+ 
+  Serial.print("Conectando a WiFi...");
+
+  WiFi.begin(ssid, password);
+
+  int intentos = 0;
+
+  while (WiFi.status() != WL_CONNECTED && intentos < 20) {
+
+      delay(500);
+
+      Serial.print(".");
+
+      intentos++;
+
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+
+      Serial.println("\nConectado a WiFi");
+
+      digitalWrite(wifiLed, HIGH);
+
+  } else {
+
+      Serial.println("\nNo se pudo conectar a WiFi");
+
+      digitalWrite(wifiLed, LOW);
+
+  }
+
 }
 
 void sendPostRequest(String _title, float _description, String _emitter, String _topic) {
@@ -226,10 +242,6 @@ void isCrying() {
   String _topic ="";
   
 
-/*     Serial.print("Volumen: ");
-    Serial.print(volumenActual);
-    Serial.print(" | Variación: ");
-    Serial.println(diferencia); */
 
     if (diferencia > 50) {  
         Serial.println("..............................................¡Ruido detectado!");
@@ -246,19 +258,17 @@ void isCrying() {
 
 void loop() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi desconectado, intentando reconectar...");
-    conectarWiFi();
-}
+      Serial.println("WiFi desconectado, intentando reconectar...");
+      conectarWiFi();
+  }
+  
   isTempOk();
 
-  for(int i = 0; i<30; i++){
-    
-      if(isDark()){  
-        Serial.println("corriendo servicio");
-        isMoving();
-        isCrying();
-      }
-
+  if (isDark()) {  
+      Serial.println("corriendo servicio");
+      isMoving();
+      isCrying();
   }
-  delay(500);
+
+  delay(5000);  
 }

@@ -113,15 +113,14 @@ void reconnect() {
     }
 }
 void alert(){
-    static unsigned long lastBuzzTime = 0;
-    static bool buzzerState = false;
-    unsigned long currentMillis = millis();
 
-    if (currentMillis - lastBuzzTime >= 500) {
-        buzzerState = !buzzerState;
-        digitalWrite(BUZZER_PIN, buzzerState ? HIGH : LOW);
-        lastBuzzTime = currentMillis;
-    }
+  for(int i=0; i < 5; i++){
+      digitalWrite(BUZZER_PIN, HIGH); 
+  delay(500);                     
+  digitalWrite(BUZZER_PIN, LOW);  
+  delay(500);
+  }
+  
 }
 
 void setup() {
