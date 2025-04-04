@@ -8,7 +8,7 @@
 const char* ssid = "INFINITUM1C29";       
 const char* password = "maUk4yEP9d"; 
 
-const char* serverUrl = "http://192.164.1.248:8080/events";
+const char* serverUrl = "http://34.229.2.64:8080/events";
 
 const String serie = "id0002";
 
